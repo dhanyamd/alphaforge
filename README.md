@@ -75,8 +75,3 @@ table (the signal that feeds the research loop). Because the synthetic market ha
 embedded factor premia, a correctly wired machine produces a *positive but
 modest* IR — exactly like reality.
 
-## Status / roadmap
-- [x] Full classic multifactor machine, end-to-end, runnable offline
-- [ ] Cloud adapters: `MotherDuckWarehouse`, `S3` Parquet, Databricks Spark job
-- [ ] GitHub Actions cron: daily loader + factor refresh on free cloud storage
-- [ ] Autonomous AI researcher (LLM proposes/evaluates factors) — the "KAI" layer

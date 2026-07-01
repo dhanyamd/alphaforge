@@ -8,7 +8,7 @@ dist/
 .venv/
 venv/
 .env
-interview/*
+interview/
 # Tooling caches
 .pytest_cache/
 .ruff_cache/

@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "alphaforge"
+version = "0.1.0"
+description = "AlphaForge — an end-to-end multi-factor equity trading machine (the production quant pipeline, block by block)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Dhanya" }]
+
+# Core dependencies. These mirror the real production stack a quant dev uses:
+#   numpy/pandas/polars  -> vectorized + lazy dataframe compute (the "Spark/Polars/NumPy" band)
+#   pyarrow/duckdb       -> Parquet warehouse + ASOF joins (the Parquet/Delta + KDB analogs)
+#   scipy/scikit-learn/statsmodels -> regression risk model, shrinkage, stats
+#   cvxpy                -> convex portfolio optimizer (mean-variance with constraints)
+#   pydantic*/pyyaml     -> typed config
+#   typer/rich/structlog -> CLI, pretty output, structured logging (observability)
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "polars>=1.0",
+    "pyarrow>=16.0",
+    "duckdb>=1.0",
+    "scipy>=1.13",
+    "scikit-learn>=1.4",
+    "statsmodels>=0.14",
+    "cvxpy>=1.5",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "structlog>=24.1",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# `pip install -e ".[realdata]"` to enable the optional real-equity loader.
+realdata = ["yfinance>=0.2.40"]
+# `pip install -e ".[viz]"` for tearsheet plots.
+viz = ["matplotlib>=3.8"]
+# `pip install -e ".[spark]"` for the Databricks/Spark+Delta path (needs a JVM).
+spark = ["pyspark>=3.5", "delta-spark>=3.2"]
+dev = ["pytest>=8.2", "ruff>=0.5", "mypy>=1.10"]
+
+[project.scripts]
+# After install: `alphaforge --help`
+alphaforge = "alphaforge.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/alphaforge"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]  # line length handled by formatter
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

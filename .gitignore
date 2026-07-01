@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.env
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# AlphaForge data lake (generated locally — never commit data)
+data_lake/*.duckdb
+data_lake/*.parquet
+data_lake/**/*.parquet
+artifacts/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# The architecture reference images live at repo root; keep them.
+!full_arch.png
+!full_arch2.png

@@ -1,0 +1,67 @@
+# =====================================================================
+# AlphaForge run configuration  (the single knob-board for the machine)
+# =====================================================================
+# Everything the daily loop needs. In a real firm this is split across
+# many YAML/JSON configs checked into git and diffed in PRs — config is
+# code. We keep one file for clarity.
+
+run:
+  name: "baseline_multifactor"
+  seed: 7                       # reproducibility — every run must be reproducible
+  start_date: "2015-01-02"
+  end_date: "2020-12-31"
+  rebalance: "W-FRI"            # weekly rebalance (pandas offset alias). "B" = daily.
+
+universe:
+  n_names: 200                  # size of the synthetic equity universe
+  # Liquidity gate: a name must trade > min_adv_usd on average to be tradable.
+  # This is the "define your universe first" step — you can't trade illiquid junk.
+  min_adv_usd: 1_000_000
+  top_by_adv: 150               # keep the most liquid N names
+
+data:
+  source: "synthetic"           # "synthetic" | "yfinance"
+  vendors: ["prices", "fundamentals", "altdata"]  # one data loader per vendor
+
+# Which alpha model turns the 6 signals into one return forecast:
+#   "linear" = classic IC-weighted Grinold blend (fast, explainable)
+#   "gbt"    = gradient-boosted trees, walk-forward trained (nonlinear, the ML
+#              quants actually use). Run `alphaforge compare-models` to see both.
+alpha:
+  model: "linear"
+  retrain_every: 63             # (gbt) retrain cadence in trading days (~quarterly)
+  min_train: 252                # (gbt) warmup history before the first prediction
+
+# Signals -> alphas. Each signal becomes one factor. `ic` is our prior on the
+# signal's skill (information coefficient); the alpha refinement scales by it.
+signals:
+  - {name: "value",     ic: 0.04, enabled: true}
+  - {name: "momentum",  ic: 0.05, enabled: true}
+  - {name: "size",      ic: 0.02, enabled: true}
+  - {name: "quality",   ic: 0.03, enabled: true}
+  - {name: "low_vol",   ic: 0.03, enabled: true}
+  - {name: "altdata",   ic: 0.06, enabled: true}   # the "unique edge" alt-data factor
+
+risk:
+  halflife_cov: 90             # EWMA half-life (days) for factor covariance
+  halflife_var: 60             # EWMA half-life for specific variance
+  shrinkage: 0.20              # Ledoit-Wolf style shrinkage intensity (0..1)
+  lookback: 252                # trading days of history for the risk model
+
+portfolio:
+  risk_aversion: 5.0           # lambda — penalty on variance in the optimizer
+  cost_aversion: 1.0           # penalty multiple on expected trading cost
+  max_weight: 0.05             # position limit: <=5% in any single name
+  max_gross: 1.0               # gross exposure (sum |w|) <= 1.0 (fully invested long-only base)
+  long_only: true              # flip to false to allow shorts (market-neutral)
+  sector_neutral: true         # net sector exposure ~ 0
+  max_turnover: 0.40           # <=40% of book may turn over per rebalance
+
+execution:
+  commission_bps: 1.0          # 1bp commission per dollar traded
+  half_spread_bps: 2.0         # half the bid-ask spread, in bps
+  impact_coef: 0.10            # market-impact coefficient (square-root law)
+  participation: 0.10          # we are willing to be 10% of a name's daily volume
+
+storage:
+  lake_path: "data_lake"       # local Parquet/DuckDB warehouse root

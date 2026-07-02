@@ -10,51 +10,44 @@ It runs **fully offline** on a synthetic market with embedded factor structure (
 
 Below is the chronological flow of data through the engine. It details how raw records on your hard drive become standardized signals, are optimized with risk constraints, executed under volume caps, and finally evaluated for performance and signal decay.
 
-```mermaid
-graph TD
-    %% Define Nodes and Styles
-    subgraph Data & Storage Layer
-        A["Prices & Fundamentals (Parquet on Disk)"] -->|DuckDB Query Engine| B["signals/library.py: compute_all_signals"]
-        A -->|Hive-Partitioned Lake| C["data/universe.py: build_universe"]
-    end
-    
-    subgraph Signal Hygiene & Alpha Generation
-        B -->|Raw Signals| D["alpha/refine.py: clean_panel"]
-        C -->|Universe Selection| D
-        D -->|winsorize, neutralize, z-score| E["alpha/combine.py: clean_signal_panel"]
-        E -->|Cleaned Features| F{"Alpha Model Selector"}
-        F -->|Linear blend| G["build_alphas (Linear prior IC weighting)"]
-        F -->|Non-linear GBT| H["build_ml_alphas (Walk-forward GBT)"]
-    end
-    
-    subgraph Portfolio Construction & Optimization
-        G -->|Expected Returns| I["portfolio/optimizer.py: optimize_portfolio"]
-        H -->|Expected Returns| I
-        J["risk/model.py: RiskModel"] -->|Covariance & Factor Exposures| I
-        I -->|CVXPY Convex QP Solver| K["Target Weights (Uncapped)"]
-    end
-    
-    subgraph Execution & Trading Simulation
-        K --> L["execution/simulator.py: simulate_fills"]
-        L -->|Enforce ADV Participation Cap| M["Realized Weights (Real Book)"]
-        L -->|Instant Frictionless Fill| N["Target Weights (Paper Book)"]
-        L -->|Commissions + Slippage (Slippage: Square-root Impact)| O["Transaction Cost (pending_cost)"]
-    end
-    
-    subgraph Daily P&L Loop
-        M --> P["accrue P&L (yesterday's weights * today's returns)"]
-        O -->|Subtracted from Real return tomorrow| P
-        P -->|drift positions with price movement| Q["Drift Weights (_drift)"]
-        Q -->|Next day's holding| M
-    end
-    
-    subgraph Performance & Attribution
-        P --> R["performance/decay.py: rolling_ic & decay_report"]
-        P --> S["performance/metrics.py: tearsheet generation"]
-    end
-
-    classDef box fill:#1f2937,stroke:#3b82f6,stroke-width:2px,color:#f3f4f6;
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S box;
+```text
+DATABASE (Parquet + DuckDB Lake)
+   │
+   ├──► signals/library.py   ──► [Raw Signals] ──────┐
+   │                                                 ▼
+   └──► data/universe.py     ──► [Universe Check] ──► alpha/refine.py (clean_panel)
+                                                             │
+                                                   (Winsorize & Neutralize)
+                                                             ▼
+                                                      alpha/combine.py
+                                                             │
+                                               ┌─────────────┴─────────────┐
+                                               ▼                           ▼
+                                        build_alphas                build_ml_alphas
+                                       (Linear Blend)               (Walk-Forward GBT)
+                                               │                           │
+                                               └─────────────┬─────────────┘
+                                                             ▼
+risk/model.py (RiskModel) ──────────────────────────► portfolio/optimizer.py
+(Covariance Matrix Snapshot)                        (CVXPY Convex QP Solver)
+                                                             │
+                                                             ▼
+                                                    execution/simulator.py
+                                                             │
+                                                (Enforce Participation Cap)
+                                                             ▼
+                                                     Weights & Costs
+                                               ┌─────────────┴─────────────┐
+                                               ▼                           ▼
+                                        [Real Book Weights]         [Paper Book Weights]
+                                        [Realized costs/fees]       (Frictionless)
+                                               │
+                                               ▼
+                                       backtest/engine.py
+                                       (Daily Loop: Accrue Return -> Drift -> Repeat)
+                                               │
+                                               ├─► performance/decay.py (Decay Report)
+                                               └─► performance/metrics.py (Tearsheet)
 ```
 
 ---

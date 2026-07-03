@@ -2,7 +2,7 @@
 
 > A from-scratch, runnable implementation of the industry-standard production quant architecture — **"The Multifactor Machine"** — with every block of the pipeline built and wired into a single backtest. Designed to mirror how a quant research engineer's work fits together in a real-world trading system.
 
-It runs **fully offline** on a synthetic market with embedded factor structure (so your signals have genuine predictive power). Every storage boundary is abstracted behind interfaces that can later be pointed at cloud services like **Snowflake, AWS S3, MotherDuck, or Databricks** (see [`docs/services_free_vs_paid.md`](docs/services_free_vs_paid.md)).
+It runs **fully offline** on a synthetic market with embedded factor structure (so your signals have genuine predictive power). Every storage boundary is abstracted behind interfaces that can later be pointed at cloud services like **Snowflake, AWS S3, MotherDuck, or Databricks** ).
 
 ---
 
@@ -51,6 +51,17 @@ risk/model.py (RiskModel) ──────────────────
 ```
 
 ---
+
+
+<img width="1470" height="956" alt="Screenshot 2026-07-03 at 2 33 19 PM" src="https://github.com/user-attachments/assets/d6e39ae3-b5c9-4fe1-8308-453e4f9ad025" />
+<img width="1470" height="956" alt="Screenshot 2026-07-03 at 2 32 25 PM" src="https://github.com/user-attachments/assets/d4449a85-3292-4e3b-a7c9-daf3015a864c" />
+
+
+
+
+https://github.com/user-attachments/assets/b197a053-2671-4e74-9872-d655ffbb1c92
+
+
 
 ## 2. Package Structure & Key Modules
 
